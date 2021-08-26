@@ -13,6 +13,7 @@
 #include <map>
 #include <QTextStream>
 #include <vector>
+#include <QMap>
 #include <QPair>
 #include <QRegularExpression>
 using namespace std;
@@ -27,12 +28,23 @@ TextAnalyser::TextAnalyser(QWidget *parent)
 QString inputFileName;
 QString outputFileName;
 
+struct compareClass1 {
+  bool operator() (pair<QString, int> pair1,pair<QString, int> pair2) {
+      return pair1.second > pair2.second;
+  }
+} valueComparator;
+struct compareClass2 {
+  bool operator() (pair<QString, int> pair1,pair<QString, int> pair2) {
+      return pair1.first < pair2.first;
+  }
+} keyComparator;
+
 vector<pair<QString, int>> VectorForSorting;
 vector<pair<QString, int>>::iterator iteratorForSorting;
 vector<pair<QString, int>>::iterator prevIter;
 
-map<QString, int> amount;
-map<QString, int>::iterator it;
+QMap <QString, int> amount;
+QMap <QString, int>::iterator amountIter;
 
 void TextAnalyser::loadFromFile()
 {
@@ -54,36 +66,39 @@ void TextAnalyser::loadFromFile()
         in = new QTextStream(&file);
 
 
+        QString word;
         while (!(in->atEnd())) {
-               QString line = in->readLine(1000);
-               QString word;
+               QString line = in->readLine(11111111); //smth big in limit
                for (int i = 0; i < line.length(); i++) {
-                   if(line[i].isLetter())
-                       word += line[i];
+                   QChar c = line.at(i);
+                   if(c.isLetter())
+                       word += c;
                    else
-                       it = amount.find(word);
-                       if (it != amount.end())
-                            it->second += 1;
-                        else
-                            amount.insert(it, make_pair(word, 1));
+                   {
+                     if(word.length()){
+                       if ((amountIter = amount.find(word))  != amount.end()) {
+                          amount[word] += 1;
+                       } else {
+                          amount.insert(word, 1);
+                       }
+                       word.clear();
+                     }
+                   }
                }
-
            }
+        if(word.length()){
+          if ((amountIter = amount.find(word))  != amount.end()) {
+             amount[word] += 1;
+          } else {
+             amount.insert(word, 1);
+          }
+          word.clear();
+        }
 
-        struct compareClass1 {
-              bool operator() (pair<QString, int> pair1,pair<QString, int> pair2) {
-                  return pair1.second > pair2.second;
-              }
-            } valueComparator;
-            struct compareClass2 {
-              bool operator() (pair<QString, int> pair1,pair<QString, int> pair2) {
-                  return pair1.first < pair2.first;
-              }
-            } keyComparator;
             int prevAmount = 0;
 
-            for (it = amount.begin(); it != amount.end(); it++) {
-                VectorForSorting.push_back(make_pair(it->first, it->second));
+            foreach(QString s, amount.keys()) {
+                VectorForSorting.push_back(make_pair(s, amount[s]));
             }
             std::sort(VectorForSorting.begin(), VectorForSorting.end(), valueComparator);
 
@@ -98,6 +113,7 @@ void TextAnalyser::loadFromFile()
                 prevIter=iteratorForSorting;
             }
     }
+
 
         return;
     }
@@ -130,8 +146,9 @@ void TextAnalyser::saveToFile()
         }
 
         out = new QTextStream(&file);
+
         for (iteratorForSorting = VectorForSorting.begin(); iteratorForSorting!=VectorForSorting.end(); iteratorForSorting++)
-            *out << iteratorForSorting->first << " " << iteratorForSorting->second;
+            *out << iteratorForSorting->first << " " << iteratorForSorting->second << "\n";
         return;
     }
 }
@@ -177,6 +194,9 @@ void TextAnalyser::on_analysisStartButton_clicked()
             userMessage.exec();
         }
     }
+
+
+
 }
 
 
