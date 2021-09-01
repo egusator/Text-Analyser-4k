@@ -18,8 +18,8 @@ public:
     QTextStream *in;
     QTextStream *out;
 public slots:
-    void saveToFile();
-    void loadFromFile();
+    QString getOutputFileName();
+    QString getInputFileName();
 
 private slots:
     void on_loadButton_clicked();
@@ -27,6 +27,8 @@ private slots:
     void on_saveButton_clicked();
 
     void on_analysisStartButton_clicked();
+
+    void on_findButton_clicked();
 
 private:
     Ui::TextAnalyser *ui;
