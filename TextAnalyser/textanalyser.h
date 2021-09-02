@@ -30,6 +30,10 @@ private slots:
 
     void on_findButton_clicked();
 
+    void readData(QMap<QString, int> &, QTextStream *);
+
+    void createUserMessage(QString);
+
 private:
     Ui::TextAnalyser *ui;
 };

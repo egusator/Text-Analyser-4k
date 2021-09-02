@@ -40,7 +40,6 @@ vector<pair<QString, int>>::iterator iteratorForSorting;
 vector<pair<QString, int>>::iterator prevIter;
 
 QMap<QString, int> amount;
-QMap<QString, int>::iterator amountIter;
 
 QString TextAnalyser::getInputFileName() {
     QString inputFileName;
@@ -86,7 +85,40 @@ QString TextAnalyser::getOutputFileName() {
 
 QString inputFileName, outputFileName;
 
-void TextAnalyser::on_loadButton_clicked() {
+void TextAnalyser::readData(QMap<QString, int> &map, QTextStream *stream)
+{
+    QMap<QString, int>::iterator Iter;
+    QString word;
+    while (!(stream->atEnd())) {
+        QString line = stream->readLine(11111111); //smth big in limit
+        for (int i = 0; i < line.length(); i++) {
+            QChar c = line.at(i);
+            if (c.isLetter()) {
+                word += c;
+            } else if (word.length()) {
+                word = word.toUpper();
+                if ((Iter = map.find(word)) != map.end()) {
+                    map[word] += 1;
+                } else {
+                    map.insert(word, 1);
+                }
+                word.clear();
+            }
+        }
+        if (word.length()) {
+            word = word.toUpper();
+            if ((Iter = map.find(word)) != map.end()) {
+                map[word] += 1;
+            } else {
+                map.insert(word, 1);
+            }
+            word.clear();
+        }
+    }
+}
+
+void TextAnalyser::on_loadButton_clicked()
+{
     inputFileName = getInputFileName();
     amount.clear();
     QFile inputFile(inputFileName);
@@ -95,34 +127,16 @@ void TextAnalyser::on_loadButton_clicked() {
         return;
     }
     in = new QTextStream(&inputFile);
+    readData(amount, in);
+    createUserMessage("The data is loaded. Click the gogogo button");
+}
 
-    QString word;
-    while (!(in->atEnd())) {
-        QString line = in->readLine(11111111); //smth big in limit
-        for (int i = 0; i < line.length(); i++) {
-            QChar c = line.at(i);
-            if (c.isLetter()) {
-                word += c;
-            } else if (word.length()) {
-                word = word.toUpper();
-                if ((amountIter = amount.find(word)) != amount.end()) {
-                    amount[word] += 1;
-                } else {
-                    amount.insert(word, 1);
-                }
-                word.clear();
-            }
-        }
-        if (word.length()) {
-            word = word.toUpper();
-            if ((amountIter = amount.find(word)) != amount.end()) {
-                amount[word] += 1;
-            } else {
-                amount.insert(word, 1);
-            }
-            word.clear();
-        }
-    }
+void TextAnalyser::createUserMessage(const QString s)
+{
+    QMessageBox userMessage;
+    userMessage.setText(s);
+    userMessage.exec();
+    return;
 }
 
 void TextAnalyser::on_saveButton_clicked() {
@@ -133,22 +147,22 @@ void TextAnalyser::on_saveButton_clicked() {
         QMessageBox::information(this, tr("Unable to open file"), outputFile.errorString());
         return;
     }
+
     out = new QTextStream(&outputFile);
+
     for (iteratorForSorting = VectorForSorting.begin();
          iteratorForSorting != VectorForSorting.end();
          iteratorForSorting++)
         *out << iteratorForSorting->first << " " << iteratorForSorting->second << "\n";
+    createUserMessage("You can check results in the file you've chosen");
 }
 
 void TextAnalyser::on_analysisStartButton_clicked() {
     VectorForSorting.clear();
-    QMessageBox userMessage;
+
     if (inputFileName.isEmpty()) {
-        userMessage.setText(tr("Open files for input!"));
-        userMessage.exec();
+        createUserMessage("Open files for input");
         return;
-    } else {
-        userMessage.setText(tr("Analysis went succesfully. Choose the file for output."));
     }
 
     int prevAmount = 0;
@@ -182,7 +196,7 @@ void TextAnalyser::on_analysisStartButton_clicked() {
     ui->textEdit->setPlainText(str);
     QTextCursor cursor = ui->textEdit->textCursor();
     cursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor, 1);
-    userMessage.exec();
+    createUserMessage("Analysis is done. Choose file to save results");
     return;
 }
 void TextAnalyser::on_findButton_clicked()
